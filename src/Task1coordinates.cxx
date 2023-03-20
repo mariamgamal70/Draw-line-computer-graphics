@@ -29,6 +29,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QInputDialog>
+#include <QFileDialog>
 
 #include <cmath>
 #include <cstdlib>
@@ -39,7 +40,7 @@ using namespace std;
 
 ofstream myfile;
 ifstream readfile;
-
+int filecounter = 0;
 
 namespace {
     // Define interaction style
@@ -85,7 +86,7 @@ namespace {
             sprintf(text, "Line coordinates: (%.2f, %.2f) - (%.2f, %.2f)", point1[0], point1[1], point2[0], point2[1]);
             TextActor->SetInput(text);
             TextActor->Modified();
-            writeInFile();
+            //writeInFile();
             // Forward events
             vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
         }
@@ -104,21 +105,20 @@ namespace {
         void setVTKActor(vtkActor* lineActor) {
             this->lineActor = lineActor;
         }
-        void writeInFile() {
-            myfile.open("myfile.txt", ios::out); // Open the file for writing
-
-            if (myfile.is_open()) { // Check if file opened successfully
-                double* point1 = LineSource->GetPoint1();
-                double* point2 = LineSource->GetPoint2();
-                myfile << point1[0] << " " << point1[1] << endl; // Write data to the file
-                myfile << point2[0] << " " << point2[1] << endl;
-                //myfile << lineActor->GetProperty()->GetColor() << endl;
-                myfile.close(); // Close the file
-            }
-            else {
-                cout << "Unable to create or open the file." << endl;
-            }
-        }
+        //void writeInFile() {
+        //    myfile.open("myfile.txt", ios::out); // Open the file for writing
+        //    if (myfile.is_open()) { // Check if file opened successfully
+        //        double* point1 = LineSource->GetPoint1();
+        //        double* point2 = LineSource->GetPoint2();
+        //        myfile << point1[0] << " " << point1[1] << endl; // Write data to the file
+        //        myfile << point2[0] << " " << point2[1] << endl;
+        //        //myfile << lineActor->GetProperty()->GetColor() << endl;
+        //        myfile.close(); // Close the file
+        //    }
+        //    else {
+        //        cout << "Unable to create or open the file." << endl;
+        //    }
+        //}
 
     private:
         vtkLineSource* LineSource;
@@ -131,19 +131,34 @@ namespace {
   //-------------------------------------------------------------------------------------------------------------------------------------------
 
     void writeInFile(vtkLineSource* linesource, vtkActor* lineActor) {
-        myfile.open("myfile.txt", ios::out); // Open the file for writing
-
-        if (myfile.is_open()) { // Check if file opened successfully
+        QString fileName = QFileDialog::getSaveFileName(nullptr, "Save File", ".", "Text Files (*.txt)");
+        QFile file(fileName);
+        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&file);
             double* point1 = linesource->GetPoint1();
             double* point2 = linesource->GetPoint2();
-            myfile << point1[0] << " " << point1[1] << endl; // Write data to the file
-            myfile << point2[0] << " " << point2[1] << endl;
-            //myfile << lineActor->GetProperty()-> GetColor() << endl;
-            myfile.close(); // Close the file
+            out << point1[0] << " " << point1[1] << Qt::endl; // write data to the file
+            out << point2[0] << " " << point2[1] << Qt::endl;
+            out << lineActor->GetProperty()->GetColor()[0] << " "
+                << lineActor->GetProperty()->GetColor()[1] << " "
+                << lineActor->GetProperty()->GetColor()[2] << Qt::endl;
+            file.close();
         }
-        else {
-            cout << "Unable to create or open the file." << endl;
-        }
+        //filecounter++;
+        //string filename = "myfile" + to_string(filecounter) + ".txt";
+        //myfile.open(filename, ios::out); // open the file for writing
+
+        //if (myfile.is_open()) { // check if file opened successfully
+        //    double* point1 = linesource->GetPoint1();
+        //    double* point2 = linesource->GetPoint2();
+        //    myfile << point1[0] << " " << point1[1] << endl; // write data to the file
+        //    myfile << point2[0] << " " << point2[1] << endl;
+        //    //myfile << lineactor->getproperty()-> getcolor() << endl;
+        //    myfile.close(); // close the file
+        //}
+        //else {
+        //    cout << "unable to create or open the file." << endl;
+        //}
     }
 
     void updateTextCoordinates(vtkLineSource* linesource, vtkTextActor* TextActor, vtkActor* lineActor) {
@@ -153,7 +168,7 @@ namespace {
         sprintf(text, "Line coordinates: (%.2f, %.2f) - (%.2f, %.2f)", point1[0], point1[1], point2[0], point2[1]);
         TextActor->SetInput(text);
         TextActor->Modified();
-        writeInFile(linesource,lineActor);
+        //writeInFile(linesource,lineActor);
     }
     void setFirstCoordinate(vtkLineSource* linesource, vtkGenericOpenGLRenderWindow* window, vtkTextActor* TextActor, vtkActor* lineActor) {
         double x1 = QInputDialog::getDouble(NULL, "Enter first coordinates", "x1 coordinate", 0, -1000, 1000, 2);
@@ -171,18 +186,56 @@ namespace {
     }
 
     void readInputFile(vtkLineSource* linesource, vtkGenericOpenGLRenderWindow* window, vtkTextActor* TextActor, vtkActor* lineActor) {
-        readfile.open("myfile.txt", ios::in); //open a file to perform read operation using file object
-        if (readfile.is_open()) { //checking whether the file is open
+        QString fileObject = QFileDialog::getOpenFileName(nullptr, "Open File", ".", "Text Files (*.txt)");
+        if (fileObject.isEmpty()) {
+            return;  // Dialog was cancelled
+        }
+        QFile file(fileObject);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            return;
+        else {
+            QTextStream in(&file);
             double x1, y1, x2, y2;
-            readfile >> x1 >> y1 >> x2 >> y2;
-            linesource->SetPoint1(x1, y1,0.0);
-            linesource->SetPoint2(x2, y2, 0.0);
+            //QString color, property;
+            if (!in.atEnd()) {
+                QStringList linepoint1 = in.readLine().split(" ");
+                /*x1 = linepoint1[0].toDouble();
+                y1 = linepoint1[1].toDouble();*/
+                linesource->SetPoint1(linepoint1[0].toDouble(), linepoint1[1].toDouble(), 0.0);
+            }
+            if (!in.atEnd()) {
+               QStringList linepoint2 = in.readLine().split(" ");
+               /*x2 = linepoint2[0].toDouble();
+               y2 = linepoint2[1].toDouble();*/
+               linesource->SetPoint2(linepoint2[0].toDouble(), linepoint2[1].toDouble(), 0.0);
+            }
+            if (!in.atEnd()) {
+                QStringList rgb = in.readLine().split(" ");
+                double rgbarr[3];
+                rgbarr[0]=rgb.at(0).toDouble();
+                rgbarr[1] = rgb.at(1).toDouble();
+                rgbarr[2] = rgb.at(2).toDouble();
+                lineActor->GetProperty()->SetColor(rgbarr);
+            }
+            /*if (!in.atEnd()) {
+                property = in.readLine();
+            }*/
             window->Render();
             updateTextCoordinates(linesource, TextActor, lineActor);
-            readfile.close(); //close the file object.
-        }
+            file.close(); //close the file object.
+            }
+            //readfile.open(fileName, ios::in); //open a file to perform read operation using file object
+            //if (readfile.is_open()) { //checking whether the file is open
+            //    double x1, y1, x2, y2;
+            //    readfile >> x1 >> y1 >> x2 >> y2;
+            //    linesource->SetPoint1(x1, y1,0.0);
+            //    linesource->SetPoint2(x2, y2, 0.0);
+            //    window->Render();
+            //    updateTextCoordinates(linesource, TextActor, lineActor);
+            //    readfile.close(); //close the file object.
+            //}
+        
     }
-
 } // namespace
 
 int main(int argc, char** argv)
@@ -218,7 +271,11 @@ int main(int argc, char** argv)
 
     QPushButton readFile;
     readFile.setText("Read Input File");
-    dockLayout->addWidget(&readFile, 1, Qt::AlignTop);
+    dockLayout->addWidget(&readFile, 0, Qt::AlignTop);
+
+    QPushButton writeFile;
+    writeFile.setText("Write Input File");
+    dockLayout->addWidget(&writeFile, 1, Qt::AlignTop);
 
      //render area
     QPointer<QVTKOpenGLNativeWidget> vtkRenderWidget = new QVTKOpenGLNativeWidget();
@@ -293,6 +350,9 @@ int main(int argc, char** argv)
     QObject::connect(&readFile, &QPushButton::released,
         [&]() { ::readInputFile(linesource, window, textActor, lineactor); });
 
+    QObject::connect(&writeFile, &QPushButton::released,
+        [&]() { ::writeInFile(linesource,lineactor); });
+    
     mainWindow.show();
 
     return app.exec();
