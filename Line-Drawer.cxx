@@ -128,6 +128,7 @@ namespace {
             out << lineActor->GetProperty()->GetColor()[0] << " "
                 << lineActor->GetProperty()->GetColor()[1] << " "
                 << lineActor->GetProperty()->GetColor()[2] << Qt::endl;
+            out<<lineActor->GetProperty()->GetLineWidth() << Qt::endl;
             file.close();
         }
     }
@@ -182,9 +183,11 @@ namespace {
                 rgbarr[2] = rgb.at(2).toDouble();
                 lineActor->GetProperty()->SetColor(rgbarr);
             }
-            /*if (!in.atEnd()) {
-                property = in.readLine();
-            }*/
+            if (!in.atEnd()) {
+                QStringList lineWidthString= in.readLine().split(" ");;
+                double lineWidth = lineWidthString.at(0).toDouble();
+                lineActor->GetProperty()->SetLineWidth(lineWidth);
+            }
             window->Render();
             updateTextCoordinates(linesource, TextActor, lineActor);
             file.close(); //close the file object.
@@ -201,6 +204,31 @@ namespace {
             window->Render();
         }
     }
+
+    //void changeLineProperty(int index, vtkGenericOpenGLRenderWindow* window, vtkActor* lineActor) {
+    //    cout<<lineActor->GetProperty()->GetLineStipplePattern();
+    //    if (index == 0) {
+    //        lineActor->GetProperty()->SetLineStipplePattern(65535);
+    //        lineActor->GetProperty()->SetLineStippleRepeatFactor(1);
+    //        //window->Render();
+    //    }
+    //    else if (index == 1) {//dashed
+    //        lineActor->GetProperty()->SetLineStipplePattern(255); 
+    //        lineActor->GetProperty()->SetLineStippleRepeatFactor(1);
+    //        //window->Render();
+    //    }
+    //    else if (index == 2) {//dotted
+    //        lineActor->GetProperty()->SetLineStipplePattern(43690);
+    //        lineActor->GetProperty()->SetLineStippleRepeatFactor(1);
+    //        //window->Render();
+    //    }
+    //}
+    
+    void changeLineWidth(int value, vtkGenericOpenGLRenderWindow* window, vtkActor* lineActor) {
+        lineActor->GetProperty()->SetLineWidth(value);
+        window->Render();
+    }
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -246,16 +274,25 @@ int main(int argc, char** argv)
     colorButton.setText("Select color");
     dockLayout->addWidget(&colorButton, 0, Qt::AlignTop);
 
-    QComboBox comboBox ;
+    QSlider slider;
+    slider.setMinimum(0);
+    slider.setMaximum(10);
+    slider.setValue(0);
+    slider.setOrientation(Qt::Horizontal);
+    dockLayout->addWidget(&slider, 1, Qt::AlignTop);
+
+    /*QComboBox comboBox ;
     comboBox.addItem(QApplication::tr("solid"));
     comboBox.addItem(QApplication::tr("dashed"));
     comboBox.addItem(QApplication::tr("dotted"));
-    dockLayout->addWidget(&comboBox, 1, Qt::AlignTop);
+    dockLayout->addWidget(&comboBox, 1, Qt::AlignTop);*/
 
      //render area
     QPointer<QVTKOpenGLNativeWidget> vtkRenderWidget = new QVTKOpenGLNativeWidget();
     mainWindow.setCentralWidget(vtkRenderWidget);
     mainWindow.setWindowTitle("VTK Line Example");
+
+
 
     // VTK part
     vtkNew<vtkGenericOpenGLRenderWindow> window;
@@ -279,6 +316,7 @@ int main(int argc, char** argv)
     vtkNew<customMouseInteractorStyle> style;
     style->setLineSource(linesource);
     style->setVTKActor(lineactor);
+
     window->GetInteractor()->SetInteractorStyle(style);
 
     vtkNew<vtkTextActor> textActor;
@@ -313,7 +351,16 @@ int main(int argc, char** argv)
 
     QObject::connect(&colorButton, &QPushButton::released,
         [&]() { ::openColorWindow(window,lineactor); });
+
+    /*QObject::connect(&comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), [&](int index) {
+        ::changeLineProperty(index,window,lineactor);
+        });*/
     
+    QObject::connect(&slider, &QSlider::valueChanged, [&](int value) {
+        // Do something with the value
+        ::changeLineWidth(value, window, lineactor);
+        });
+
     mainWindow.show();
 
     return app.exec();
