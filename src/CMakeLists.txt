@@ -6,7 +6,7 @@ if(POLICY CMP0020)
   cmake_policy(SET CMP0071 NEW)
 endif()
 
-PROJECT(Task1coordinates)
+PROJECT(Line-Drawer)
 
 find_package(VTK COMPONENTS 
   CommonCore
@@ -24,11 +24,11 @@ find_package(VTK COMPONENTS
 )
 
 if(NOT VTK_FOUND)
-  message(FATAL_ERROR "Task1coordinates: Unable to find the VTK build folder.")
+  message(FATAL_ERROR "Line-Drawer: Unable to find the VTK build folder.")
 endif()
 
 if(NOT(TARGET VTK::GUISupportQt))
-  message(FATAL_ERROR "Task1coordinates: VTK not built with Qt support.")
+  message(FATAL_ERROR "Line-Drawer: VTK not built with Qt support.")
 endif()
 
 if(NOT DEFINED VTK_QT_VERSION)
@@ -69,17 +69,17 @@ file(GLOB CXX_FILES *.cxx)
 # Prevent a "command line is too long" failure in Windows.
 set(CMAKE_NINJA_FORCE_RESPONSE_FILE "ON" CACHE BOOL "Force Ninja to use response files.")
 # CMAKE_AUTOMOC in ON so the MOC headers will be automatically wrapped.
-add_executable(Task1coordinates MACOSX_BUNDLE
+add_executable(Line-Drawer MACOSX_BUNDLE
   ${CXX_FILES} ${UISrcs} ${QT_WRAP}
 )
 if (Qt${VTK_QT_VERSION}Widgets_VERSION VERSION_LESS "5.11.0")
-  qt5_use_modules(Task1coordinates ${qt_components})
+  qt5_use_modules(Line-Drawer ${qt_components})
 else()
-  target_link_libraries(Task1coordinates ${qt_modules})
+  target_link_libraries(Line-Drawer ${qt_modules})
 endif()
-target_link_libraries(Task1coordinates ${VTK_LIBRARIES})
+target_link_libraries(Line-Drawer ${VTK_LIBRARIES})
 # vtk_module_autoinit is needed
 vtk_module_autoinit(
-  TARGETS Task1coordinates
+  TARGETS Line-Drawer
   MODULES ${VTK_LIBRARIES}
 )
