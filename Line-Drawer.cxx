@@ -56,8 +56,6 @@ namespace {
         {
             click++;
             vtkRenderWindowInteractor* interactor = this->Interactor;
-            //int clickpositionone[2];
-            //this->Interactor->GetEventPosition(clickpositionone); //get mouse coordinates x and y
             if (click == 1) {
                 this->Interactor->GetPicker()->Pick(this->Interactor->GetEventPosition()[0],//pick the first point using mouse x&y
                     this->Interactor->GetEventPosition()[1],
@@ -132,21 +130,6 @@ namespace {
                 << lineActor->GetProperty()->GetColor()[2] << Qt::endl;
             file.close();
         }
-        //filecounter++;
-        //string filename = "myfile" + to_string(filecounter) + ".txt";
-        //myfile.open(filename, ios::out); // open the file for writing
-
-        //if (myfile.is_open()) { // check if file opened successfully
-        //    double* point1 = linesource->GetPoint1();
-        //    double* point2 = linesource->GetPoint2();
-        //    myfile << point1[0] << " " << point1[1] << endl; // write data to the file
-        //    myfile << point2[0] << " " << point2[1] << endl;
-        //    //myfile << lineactor->getproperty()-> getcolor() << endl;
-        //    myfile.close(); // close the file
-        //}
-        //else {
-        //    cout << "unable to create or open the file." << endl;
-        //}
     }
 
     void updateTextCoordinates(vtkLineSource* linesource, vtkTextActor* TextActor, vtkActor* lineActor) {
@@ -183,17 +166,12 @@ namespace {
         else {
             QTextStream in(&file);
             double x1, y1, x2, y2;
-            //QString color, property;
             if (!in.atEnd()) {
                 QStringList linepoint1 = in.readLine().split(" ");
-                /*x1 = linepoint1[0].toDouble();
-                y1 = linepoint1[1].toDouble();*/
                 linesource->SetPoint1(linepoint1[0].toDouble(), linepoint1[1].toDouble(), 0.0);
             }
             if (!in.atEnd()) {
                 QStringList linepoint2 = in.readLine().split(" ");
-                /*x2 = linepoint2[0].toDouble();
-                y2 = linepoint2[1].toDouble();*/
                 linesource->SetPoint2(linepoint2[0].toDouble(), linepoint2[1].toDouble(), 0.0);
             }
             if (!in.atEnd()) {
@@ -211,16 +189,6 @@ namespace {
             updateTextCoordinates(linesource, TextActor, lineActor);
             file.close(); //close the file object.
         }
-        //readfile.open(fileName, ios::in); //open a file to perform read operation using file object
-        //if (readfile.is_open()) { //checking whether the file is open
-        //    double x1, y1, x2, y2;
-        //    readfile >> x1 >> y1 >> x2 >> y2;
-        //    linesource->SetPoint1(x1, y1,0.0);
-        //    linesource->SetPoint2(x2, y2, 0.0);
-        //    window->Render();
-        //    updateTextCoordinates(linesource, TextActor, lineActor);
-        //    readfile.close(); //close the file object.
-        //}
     }
     void openColorWindow(vtkGenericOpenGLRenderWindow* window, vtkActor* lineActor) {
         QColorDialog colorDialog;
@@ -300,26 +268,18 @@ int main(int argc, char** argv)
     vtkNew<vtkActor> lineactor;
     lineactor->SetMapper(linemapper);
 
-    //vtkNew<vtkRenderWindow> renderWindow;
     vtkNew<vtkRenderer> renderer;
     renderer->AddActor(lineactor);
     window->AddRenderer(renderer);
-    //renderWindow->AddRenderer(renderer);
 
-    //vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
     vtkNew<vtkPointPicker> pointPicker;
     window->SetInteractor(vtkRenderWidget->interactor());
     window->GetInteractor()->SetPicker(pointPicker);
-    //renderWindowInteractor->SetPicker(pointPicker);
-    //renderWindowInteractor->SetRenderWindow(window);
-    //renderWindowInteractor->SetRenderWindow(renderWindow);
-    //interactor->SetInteractorStyle(style);
 
     vtkNew<customMouseInteractorStyle> style;
     style->setLineSource(linesource);
     style->setVTKActor(lineactor);
     window->GetInteractor()->SetInteractorStyle(style);
-    //window->GetInteractor()->Start();
 
     vtkNew<vtkTextActor> textActor;
     textActor->SetInput("Line coordinates: (0, 0) - (0, 0)");
@@ -337,15 +297,6 @@ int main(int argc, char** argv)
     textWidget->SelectableOff();
     textWidget->SetInteractor(vtkRenderWidget->interactor());
 
-    //renderWindowInteractor->SetInteractorStyle(style);
-    //window->SetInteractor(renderWindowInteractor);
-    //window->Render();
-    //renderWindow->AddRenderer(renderer);
-    //renderWindowInteractor->Initialize();
-    //renderWindowInteractor->Start();
-    //// setup initial status
-    //std::mt19937 randEng(0);
-    //::Randomize(sphere, mapper, window, randEng);
 
     //// connect the buttons
     QObject::connect(&setFirstCoordinate, &QPushButton::released,
@@ -366,5 +317,4 @@ int main(int argc, char** argv)
     mainWindow.show();
 
     return app.exec();
-    //return EXIT_SUCCESS;
 }
