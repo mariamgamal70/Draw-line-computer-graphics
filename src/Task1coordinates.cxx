@@ -30,6 +30,8 @@
 #include <QVBoxLayout>
 #include <QInputDialog>
 #include <QFileDialog>
+#include <QComboBox>
+#include <QColorDialog>
 
 #include <cmath>
 #include <cstdlib>
@@ -105,20 +107,6 @@ namespace {
         void setVTKActor(vtkActor* lineActor) {
             this->lineActor = lineActor;
         }
-        //void writeInFile() {
-        //    myfile.open("myfile.txt", ios::out); // Open the file for writing
-        //    if (myfile.is_open()) { // Check if file opened successfully
-        //        double* point1 = LineSource->GetPoint1();
-        //        double* point2 = LineSource->GetPoint2();
-        //        myfile << point1[0] << " " << point1[1] << endl; // Write data to the file
-        //        myfile << point2[0] << " " << point2[1] << endl;
-        //        //myfile << lineActor->GetProperty()->GetColor() << endl;
-        //        myfile.close(); // Close the file
-        //    }
-        //    else {
-        //        cout << "Unable to create or open the file." << endl;
-        //    }
-        //}
 
     private:
         vtkLineSource* LineSource;
@@ -168,7 +156,6 @@ namespace {
         sprintf(text, "Line coordinates: (%.2f, %.2f) - (%.2f, %.2f)", point1[0], point1[1], point2[0], point2[1]);
         TextActor->SetInput(text);
         TextActor->Modified();
-        //writeInFile(linesource,lineActor);
     }
     void setFirstCoordinate(vtkLineSource* linesource, vtkGenericOpenGLRenderWindow* window, vtkTextActor* TextActor, vtkActor* lineActor) {
         double x1 = QInputDialog::getDouble(NULL, "Enter first coordinates", "x1 coordinate", 0, -1000, 1000, 2);
@@ -204,15 +191,15 @@ namespace {
                 linesource->SetPoint1(linepoint1[0].toDouble(), linepoint1[1].toDouble(), 0.0);
             }
             if (!in.atEnd()) {
-               QStringList linepoint2 = in.readLine().split(" ");
-               /*x2 = linepoint2[0].toDouble();
-               y2 = linepoint2[1].toDouble();*/
-               linesource->SetPoint2(linepoint2[0].toDouble(), linepoint2[1].toDouble(), 0.0);
+                QStringList linepoint2 = in.readLine().split(" ");
+                /*x2 = linepoint2[0].toDouble();
+                y2 = linepoint2[1].toDouble();*/
+                linesource->SetPoint2(linepoint2[0].toDouble(), linepoint2[1].toDouble(), 0.0);
             }
             if (!in.atEnd()) {
                 QStringList rgb = in.readLine().split(" ");
                 double rgbarr[3];
-                rgbarr[0]=rgb.at(0).toDouble();
+                rgbarr[0] = rgb.at(0).toDouble();
                 rgbarr[1] = rgb.at(1).toDouble();
                 rgbarr[2] = rgb.at(2).toDouble();
                 lineActor->GetProperty()->SetColor(rgbarr);
@@ -223,18 +210,28 @@ namespace {
             window->Render();
             updateTextCoordinates(linesource, TextActor, lineActor);
             file.close(); //close the file object.
-            }
-            //readfile.open(fileName, ios::in); //open a file to perform read operation using file object
-            //if (readfile.is_open()) { //checking whether the file is open
-            //    double x1, y1, x2, y2;
-            //    readfile >> x1 >> y1 >> x2 >> y2;
-            //    linesource->SetPoint1(x1, y1,0.0);
-            //    linesource->SetPoint2(x2, y2, 0.0);
-            //    window->Render();
-            //    updateTextCoordinates(linesource, TextActor, lineActor);
-            //    readfile.close(); //close the file object.
-            //}
-        
+        }
+        //readfile.open(fileName, ios::in); //open a file to perform read operation using file object
+        //if (readfile.is_open()) { //checking whether the file is open
+        //    double x1, y1, x2, y2;
+        //    readfile >> x1 >> y1 >> x2 >> y2;
+        //    linesource->SetPoint1(x1, y1,0.0);
+        //    linesource->SetPoint2(x2, y2, 0.0);
+        //    window->Render();
+        //    updateTextCoordinates(linesource, TextActor, lineActor);
+        //    readfile.close(); //close the file object.
+        //}
+    }
+    void openColorWindow(vtkGenericOpenGLRenderWindow* window, vtkActor* lineActor) {
+        QColorDialog colorDialog;
+        if (colorDialog.exec() == QDialog::Accepted) {
+            QColor color = colorDialog.currentColor();
+            int red = color.red();
+            int green = color.green();
+            int blue = color.blue();
+            lineActor->GetProperty()->SetColor(red,green,blue);
+            window->Render();
+        }
     }
 } // namespace
 
@@ -276,6 +273,16 @@ int main(int argc, char** argv)
     QPushButton writeFile;
     writeFile.setText("Write Input File");
     dockLayout->addWidget(&writeFile, 1, Qt::AlignTop);
+
+    QPushButton colorButton;
+    colorButton.setText("Select color");
+    dockLayout->addWidget(&colorButton, 0, Qt::AlignTop);
+
+    QComboBox comboBox ;
+    comboBox.addItem(QApplication::tr("solid"));
+    comboBox.addItem(QApplication::tr("dashed"));
+    comboBox.addItem(QApplication::tr("dotted"));
+    dockLayout->addWidget(&comboBox, 1, Qt::AlignTop);
 
      //render area
     QPointer<QVTKOpenGLNativeWidget> vtkRenderWidget = new QVTKOpenGLNativeWidget();
@@ -352,6 +359,9 @@ int main(int argc, char** argv)
 
     QObject::connect(&writeFile, &QPushButton::released,
         [&]() { ::writeInFile(linesource,lineactor); });
+
+    QObject::connect(&colorButton, &QPushButton::released,
+        [&]() { ::openColorWindow(window,lineactor); });
     
     mainWindow.show();
 
