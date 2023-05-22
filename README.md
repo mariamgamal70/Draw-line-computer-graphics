@@ -9,4 +9,3 @@ A beginner project using C++, VTK , and QT to understand the pipeline of vtk
   <li>Change line color.</li>
   <li>Read and write a text file which contains all line points and properties</li>
 </ol>
-<span><b>Note:</b> This project is under construction</span>
